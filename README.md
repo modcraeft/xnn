@@ -15,7 +15,7 @@ Feature                 Status
 Header-only             Yes
 No dependencies         Yes
 Activations             Sigmoid, Tanh, ReLU, Softmax
-Loss,"MSE               Cross-Entropy
+Loss                    MSE / Cross-Entropy
 Initialization          Xavier / He
 Mini-batch training     Yes
 Gradient clipping       Yes

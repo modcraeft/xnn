@@ -1,4 +1,4 @@
-# xnn.h – Tiny Header-Only Neural Network in C
+# xnn.h – Header-Only Neural Network in C
 
 **< 600 LOC. No dependencies. Trains MNIST to 98.13%.**
 
@@ -10,20 +10,20 @@ XNN_INIT();
 ```
 
 # Features
-
-Feature,                Status
-Header-only,            Yes
-No dependencies,        Yes
-Activations,            "Sigmoid, Tanh, ReLU, Softmax"
-Loss,"MSE,              Cross-Entropy"
-Initialization,         Xavier / He
-Mini-batch training,    Yes
-Gradient clipping,      Yes
-Save / load,            Yes
-CSV loader,             Yes
-Gradient-checked,       Yes
-MNIST 98.13%,           Yes
-
+```
+Feature                 Status
+Header-only             Yes
+No dependencies         Yes
+Activations             Sigmoid, Tanh, ReLU, Softmax
+Loss,"MSE               Cross-Entropy
+Initialization          Xavier / He
+Mini-batch training     Yes
+Gradient clipping       Yes
+Save / load             Yes
+CSV loader              Yes
+Gradient-checked        Yes
+MNIST 98.13%            Yes
+```
 
 # Quick Start
 ```

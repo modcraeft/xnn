@@ -1,5 +1,5 @@
 /* ==============================================================
- * xnn.h – tiny header-only neural network in C
+ * xnn.h – header-only neural network in C
  * --------------------------------------------------------------
  * • Switchable activations: sigmoid, tanh, relu, softmax (per layer)
  * • Xavier/He initialization
@@ -22,7 +22,7 @@
 #include <time.h>
 
 /* ------------------------------------------------------------------
- * Helper Macros
+ * Macros
  * ------------------------------------------------------------------ */
 #define ARRAY_LEN(x) ( (sizeof(x)) / (sizeof(x[0])) )
 
@@ -392,6 +392,7 @@ fail:
     fclose(f);
     return NULL;
 }
+
 float network_mse(const Network *net, const Data *data)
 {
     if (!net || !data || !data->in || !data->out) return 0.0f;
@@ -428,6 +429,7 @@ float network_mse(const Network *net, const Data *data)
     network_free(tmp);
     return loss / batch;
 }
+
 void network_predict(const Network *net, const float *input, float *output)
 {
     if (!net || !input || !output) return;

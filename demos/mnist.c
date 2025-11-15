@@ -68,14 +68,7 @@ int main(void) {
         fprintf(stderr, "     • %s\n", train_path);
         fprintf(stderr, "     • %s\n", test_path);
         fprintf(stderr, "\n");
-        fprintf(stderr, "   Download them using:\n");
-        fprintf(stderr, "\n");
-        fprintf(stderr, "     curl -L -o mnist_train.csv \\\n");
-        fprintf(stderr, "       https://pjreddie.com/media/files/mnist_train.csv\n");
-        fprintf(stderr, "     curl -L -o mnist_test.csv \\\n");
-        fprintf(stderr, "       https://pjreddie.com/media/files/mnist_test.csv\n");
-        fprintf(stderr, "\n");
-        fprintf(stderr, "   Or visit: https://pjreddie.com/projects/mnist-in-csv/\n");
+        fprintf(stderr, "   git clone them from: https://github.com/phoebetronic/mnist");
         fprintf(stderr, "\n");
         return 1;
     }

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #define BATCH_SIZE 64
 #define LEARNING_RATE 0.1f
@@ -46,14 +47,49 @@ static void clip_grad(Network *grad, float max_norm) {
     }
 }
 
+static int file_exists(const char *path) {
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
 int main(void) {
     XNN_INIT();
     srand(time(NULL));
 
-    /* Load & normalize */
-    Matrix *train_raw = matrix_from_csv("mnist_train.csv", 60000, 785);
-    Matrix *test_raw  = matrix_from_csv("mnist_test.csv",  10000, 785);
-    if (!train_raw || !test_raw) return 1;
+	const char *train_path = "mnist_train.csv";
+    const char *test_path  = "mnist_test.csv";
+
+    // Check if files exist
+    if (!file_exists(train_path) || !file_exists(test_path)) {
+        fprintf(stderr, "\n");
+        fprintf(stderr, "ERROR: MNIST CSV files not found!\n");
+        fprintf(stderr, "\n");
+        fprintf(stderr, "   Required files:\n");
+        fprintf(stderr, "     • %s\n", train_path);
+        fprintf(stderr, "     • %s\n", test_path);
+        fprintf(stderr, "\n");
+        fprintf(stderr, "   Download them using:\n");
+        fprintf(stderr, "\n");
+        fprintf(stderr, "     curl -L -o mnist_train.csv \\\n");
+        fprintf(stderr, "       https://pjreddie.com/media/files/mnist_train.csv\n");
+        fprintf(stderr, "     curl -L -o mnist_test.csv \\\n");
+        fprintf(stderr, "       https://pjreddie.com/media/files/mnist_test.csv\n");
+        fprintf(stderr, "\n");
+        fprintf(stderr, "   Or visit: https://pjreddie.com/projects/mnist-in-csv/\n");
+        fprintf(stderr, "\n");
+        return 1;
+    }
+
+    printf("Loading MNIST data...\n");
+    Matrix *train_raw = matrix_from_csv(train_path, 60000, 785);
+    Matrix *test_raw  = matrix_from_csv(test_path,  10000, 785);
+    if (!train_raw || !test_raw) {
+        fprintf(stderr, "Failed to load CSV. Check format and paths.\n");
+        return 1;
+    }
+
+
+
 
     Matrix *X_train = matrix_alloc(60000, 784);
     Matrix *y_train = matrix_alloc(60000, 10);

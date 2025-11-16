@@ -81,9 +81,6 @@ int main(void) {
         return 1;
     }
 
-
-
-
     Matrix *X_train = matrix_alloc(60000, 784);
     Matrix *y_train = matrix_alloc(60000, 10);
     Matrix *X_test  = matrix_alloc(10000, 784);

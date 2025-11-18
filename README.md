@@ -1,6 +1,6 @@
 # xnn.h – Header-Only Neural Network in C
 
-**< 600 LOC. No dependencies. Trains MNIST to 98.13%.**
+**No dependencies. Trains MNIST to 98.13%.**
 
 ```c
 size_t arch[] = {784, 128, 10};
@@ -9,9 +9,10 @@ Network *net = network_alloc(arch, 3, act, LOSS_CE);
 XNN_INIT();
 ```
 
-# Features
+## Features
 ```
 Feature                 Status
+------------------------------
 Header-only             Yes
 No dependencies         Yes
 Activations             Sigmoid, Tanh, ReLU, Softmax
@@ -25,7 +26,7 @@ Gradient-checked        Yes
 MNIST 98.13%            Yes
 ```
 
-# Quick Start
+## Quick Start
 ```
 #define XNN_IMPLEMENTATION
 #include "xnn.h"
@@ -50,13 +51,14 @@ int main() {
     network_save(net, "model.bin");
 }
 ```
-# Demos
-
-Demo,   Run
-XOR,    make run-test
-MNIST,  make run-mnist
-
-# API
+## Demos
+```
+test.c          Test Implementation   
+mnist.c         Train mnist
+mnist_draw.c    Load mnist model and visualize (SDL2)
+char_rnn.c      Trains text (AI Generated)
+```
+## API
 ```
 Network *network_alloc(const size_t *arch, size_t n, const int *act, int loss);
 void forward(Network *net);
@@ -68,10 +70,10 @@ int network_save(const Network *net, const char *path);
 Network *network_load(const char *path, ...);
 Matrix *matrix_from_csv(const char *path, size_t rows, size_t cols);
 ```
-# Author
+## Author
 
 Peter A. Jepson – @modcraeft
 
-# License
+## License
 
 MIT License – see LICENSE

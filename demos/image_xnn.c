@@ -13,12 +13,18 @@
 #define BATCH_SIZE          8
 #define BATCHES_PER_FRAME   400
 #define ARCH                2, 16, 32, 16, 1          // input (x,y) → output brightness
-#define WINDOW_W            1766
-#define WINDOW_H            1405
-#define NET_VIEW_W          1110.0f
-#define NET_VIEW_H          820.0f
-#define COST_VIEW_W         600.0f
-#define COST_VIEW_H         820.0f
+//#define WINDOW_W            1766
+//#define WINDOW_H            1405
+#define WINDOW_W            1200
+#define WINDOW_H            1000
+//#define NET_VIEW_W          1110.0f
+//#define NET_VIEW_H          820.0f
+#define NET_VIEW_W          WINDOW_W * 0.56f
+#define NET_VIEW_H          WINDOW_H * 0.56f
+//#define COST_VIEW_W         600.0f
+//#define COST_VIEW_H         820.0f
+#define COST_VIEW_W         WINDOW_W * 0.40f
+#define COST_VIEW_H         WINDOW_H * 0.63f
 #define VERIFY_SIDE         (WINDOW_H - 100 - NET_VIEW_H)
 
 // Activations: ReLU in hidden layers, Sigmoid on output (0-1)
@@ -54,7 +60,7 @@ static void render_label(SDL_Renderer *r, int x, int y, float value, int digits,
     snprintf(buf, sizeof(buf), "%.*f", digits, value);
     int cell = size;
     SDL_Rect rect = {0};
-    rect.w = rect.h = cell - 2;
+    rect.w = rect.h = cell - 1;
 
     SDL_SetRenderDrawColor(r, 0x55, 0x99, 0xFF, 255);
     for (size_t i = 0; i < strlen(buf); ++i) {
@@ -127,8 +133,8 @@ static void render_cost(SDL_Renderer *r)
     SDL_Rect bar = {x + 50, y + COST_VIEW_H - bar_h, (int)COST_VIEW_W - 100, bar_h};
     SDL_RenderFillRect(r, &bar);
 
-    render_label(r, x + 60, y + 400, g_cost, 6, 6);
-    render_label(r, x + 60, y + 20, (float)g_epoch, 0, 5);
+    render_label(r, x + 60, y + 400, g_cost, 6, 4);
+    render_label(r, x + 60, y + 20, (float)g_epoch, 0, 4);
 }
 
 static void render_original(SDL_Renderer *r, int x, int y, int sz)

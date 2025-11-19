@@ -2,7 +2,7 @@
 # xnn Makefile – header-only library + multi-demo build
 # ==============================================================
 CC := gcc
-CFLAGS := -Wall -Wextra -O2 -I. -I/usr/include/SDL2
+CFLAGS := -Wall -Wextra -O2 -I. -I/usr/include/SDL2 -Ilibs
 LIBS := -lm -lSDL2
 # Directories
 SRC_DIR := demos

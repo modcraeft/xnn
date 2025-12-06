@@ -350,6 +350,45 @@ int network_save(const Network *net, const char *path)
     fclose(f);
     return 0;
 }
+
+Network *network_load(const char *path, const size_t *arch, size_t n, const int *act, int loss)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+
+    size_t layers;
+    int saved_loss;
+    if (fread(&layers, sizeof(size_t), 1, f) != 1 || layers != n) {
+        fclose(f);
+        return NULL;
+    }
+    if (fread(&saved_loss, sizeof(int), 1, f) != 1 || saved_loss != loss) {
+        fclose(f);
+        return NULL;
+    }
+
+    Network *net = network_alloc(arch, n, act, loss);
+    if (!net) {
+        fclose(f);
+        return NULL;
+    }
+
+    for (size_t i = 0; i < n - 1; ++i) {
+        size_t w_sz = net->w[i]->rows * net->w[i]->cols;
+        size_t b_sz = net->b[i]->rows;
+        if (fread(net->w[i]->data, sizeof(float), w_sz, f) != w_sz ||
+            fread(net->b[i]->data, sizeof(float), b_sz, f) != b_sz) {
+            network_free(net);
+            fclose(f);
+            return NULL;
+        }
+    }
+
+    fclose(f);
+    return net;
+}
+
+/*
 Network *network_load(const char *path, const size_t *arch, size_t n, const int *act, int loss)
 {
     FILE *f = fopen(path, "rb");
@@ -373,6 +412,7 @@ fail:
     fclose(f);
     return NULL;
 }
+*/
 
 /* ---------- Utilities ---------- */
 Matrix *matrix_from_csv(const char *path, size_t rows, size_t cols)

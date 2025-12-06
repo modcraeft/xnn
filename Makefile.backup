@@ -1,0 +1,57 @@
+CC      := gcc
+CFLAGS  := -Wall -Wextra -O2 -I. -Ilibs -I/usr/include/SDL2/
+LDFLAGS := -lm -lSDL2 -lGL
+
+# Directories
+SRC_DIR     := src
+DEMOS_DIR   := demos
+BUILD_DIR   := build
+BUILD_DEMOS := $(BUILD_DIR)/demos
+
+
+# Main application
+MAIN_SRC    := $(SRC_DIR)/xnn.c
+MAIN_BIN    := $(BUILD_DIR)/xnn
+
+
+# Demos
+DEMO_SRCS   := $(wildcard $(DEMOS_DIR)/*.c)
+DEMO_BINS   := $(patsubst $(DEMOS_DIR)/%.c,$(BUILD_DEMOS)/%,$(DEMO_SRCS))
+
+
+# Rules
+all: $(BUILD_DIR) $(MAIN_BIN) demos
+
+# Create build directories
+$(BUILD_DIR):
+	@mkdir -p $@
+
+$(BUILD_DEMOS):
+	@mkdir -p $@
+
+
+# Main application
+$(MAIN_BIN): $(MAIN_SRC) xnn.h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
+
+# Demos
+demos: $(BUILD_DEMOS) $(DEMO_BINS)
+
+$(BUILD_DEMOS)/%: $(DEMOS_DIR)/%.c xnn.h | $(BUILD_DEMOS)
+	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
+
+# Utilities
+run-xnn: $(MAIN_BIN)
+	@echo "Running xnn"
+	@$<
+
+run-%: $(BUILD_DEMOS)/%
+	@echo "Running $*"
+	@$<
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+.PHONY: all demos clean run-xnn

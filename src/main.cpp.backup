@@ -1,0 +1,235 @@
+// src/main.cpp – 100% WORKING rotating cube in docked ImGui viewport
+
+#include <stdio.h>
+#include <math.h>
+
+// 1. GLAD first
+#define GLAD_GL_IMPLEMENTATION
+#include "glad/glad.h"
+
+// 2. GLFW second
+#include <GLFW/glfw3.h>
+
+// 3. ImGui
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_glfw.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
+
+// 4. cglm – fixed include
+#include "cglm/cglm.h"        // ← this was the bug!
+
+// Shaders
+const char* vs_src = R"(
+#version 130
+in vec3 aPos;
+in vec4 aColor;
+out vec4 vColor;
+uniform mat4 uMVP;
+void main() {
+    vColor = aColor;
+    gl_Position = uMVP * vec4(aPos, 1.0);
+}
+)";
+
+const char* fs_src = R"(
+#version 130
+in vec4 vColor;
+out vec4 fragColor;
+void main() {
+    fragColor = vColor;
+}
+)";
+
+// Global app state
+struct App {
+    GLFWwindow* window = nullptr;
+    GLuint shader = 0;
+    GLuint vao = 0, vbo = 0, ebo = 0;
+    mat4 view;      // cglm mat4 = float[16]
+    mat4 proj;
+    float rot_x = 0.0f;
+    float rot_y = 0.0f;
+    bool auto_rotate = true;
+} g;
+
+static void init_cube() {
+    float vertices[] = {
+        -0.5f,-0.5f,-0.5f,  1,0,0,1,
+         0.5f,-0.5f,-0.5f,  0,1,0,1,
+         0.5f, 0.5f,-0.5f,  0,0,1,1,
+        -0.5f, 0.5f,-0.5f,  1,1,0,1,
+        -0.5f,-0.5f, 0.5f,  1,0,1,1,
+         0.5f,-0.5f, 0.5f,  0,1,1,1,
+         0.5f, 0.5f, 0.5f,  1,1,1,1,
+        -0.5f, 0.5f, 0.5f,  0.5f,0.5f,0.5f,1,
+    };
+
+    unsigned int indices[] = {
+        0,1,2, 2,3,0,  4,5,6, 6,7,4,
+        4,5,1, 1,0,4,  6,7,3, 3,2,6,
+        5,6,2, 2,1,5,  7,4,0, 0,3,7
+    };
+
+    glGenVertexArrays(1, &g.vao);
+    glGenBuffers(1, &g.vbo);
+    glGenBuffers(1, &g.ebo);
+
+    glBindVertexArray(g.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, g.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7*sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
+}
+
+int main() {
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    g.window = glfwCreateWindow(1600, 1000, "xnn – Cube + Docking", nullptr, nullptr);
+    glfwMakeContextCurrent(g.window);
+    glfwSwapInterval(1);
+
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
+    // ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(g.window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+
+    glEnable(GL_DEPTH_TEST);
+
+    // Compile shader
+    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vs, 1, &vs_src, nullptr);
+    glCompileShader(vs);
+
+    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fs, 1, &fs_src, nullptr);
+    glCompileShader(fs);
+
+    g.shader = glCreateProgram();
+    glAttachShader(g.shader, vs);
+    glAttachShader(g.shader, fs);
+    glLinkProgram(g.shader);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    init_cube();
+
+    glm_mat4_identity(g.view);
+    glm_translate(g.view, (vec3){0,0,-3.0f});
+
+    while (!glfwWindowShouldClose(g.window)) {
+        glfwPollEvents();
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Full-screen dockspace (correct way)
+        ImGuiViewport* vp = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(vp->WorkPos);
+        ImGui::SetNextWindowSize(vp->WorkSize);
+        ImGui::SetNextWindowViewport(vp->ID);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+
+        ImGui::Begin("DockSpace", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+            ImGuiWindowFlags_NoBackground);
+
+        ImGui::PopStyleVar(3);
+        ImGui::DockSpace(ImGui::GetID("MainDockSpace"));
+        ImGui::End();
+
+        // Control panel
+        ImGui::Begin("Control");
+        ImGui::Text("xnn v0.1");
+        ImGui::Separator();
+        ImGui::Checkbox("Auto Rotate", &g.auto_rotate);
+        ImGui::Text("FPS: %.1f", io.Framerate);
+        ImGui::End();
+
+        // 3D Viewport
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+        ImGui::Begin("3D Viewport");
+
+        ImVec2 size = ImGui::GetContentRegionAvail();
+        if (size.x > 0 && size.y > 0) {
+            glViewport(0, 0, (GLsizei)size.x, (GLsizei)size.y);
+            glScissor(0, 0, (GLsizei)size.x, (GLsizei)size.y);
+            glClearColor(0.07f, 0.08f, 0.12f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            glm_perspective(glm_rad(60.0f), size.x/size.y, 0.1f, 100.0f, g.proj);
+
+            if (g.auto_rotate) {
+                g.rot_x += io.DeltaTime * 0.5f;
+                g.rot_y += io.DeltaTime * 0.8f;
+            }
+
+            mat4 model;
+            glm_mat4_identity(model);
+            glm_rotate_x(model, g.rot_x, model);
+            glm_rotate_y(model, g.rot_y, model);
+
+            mat4 mvp;
+            glm_mat4_mulN((mat4*[]){&g.proj, &g.view, &model}, 3, mvp);
+
+            glUseProgram(g.shader);
+            glUniformMatrix4fv(glGetUniformLocation(g.shader, "uMVP"), 1, GL_FALSE, (float*)mvp);
+
+            glBindVertexArray(g.vao);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+        }
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+
+        // Render
+        ImGui::Render();
+        int dw, dh;
+        glfwGetFramebufferSize(g.window, &dw, &dh);
+        glViewport(0, 0, dw, dh);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            GLFWwindow* backup = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(backup);
+        }
+
+        glfwSwapBuffers(g.window);
+    }
+
+    // Cleanup
+    glDeleteVertexArrays(1, &g.vao);
+    glDeleteBuffers(1, &g.vbo);
+    glDeleteBuffers(1, &g.ebo);
+    glDeleteProgram(g.shader);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(g.window);
+    glfwTerminate();
+    return 0;
+}

@@ -1,34 +1,55 @@
-# ==============================================================
-# xnn Makefile – header-only library + multi-demo build
-# ==============================================================
-CC := gcc
-CFLAGS := -Wall -Wextra -O2 -I. -I/usr/include/SDL2 -Ilibs
-LIBS := -lm -lSDL2
-# Directories
-SRC_DIR := demos
-BUILD_DIR:= build
-# Source files
-SOURCES := $(wildcard $(SRC_DIR)/*.c)
-# Object files
-OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
-# Executables
-BINS := $(SOURCES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%)
-# Default target
-all: $(BUILD_DIR) $(BINS)
-# Create build directory
-$(BUILD_DIR):
-	@mkdir -p $@
-# Compile each demo → .o
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c xnn.h
-	$(CC) $(CFLAGS) -c $< -o $@
-# Link each demo → executable
-$(BUILD_DIR)/%: $(BUILD_DIR)/%.o xnn.h
-	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
-# Clean
+CXX       := g++
+CC        := gcc
+
+CXXFLAGS  := -O3 -Wall -Wextra -fpermissive -Ilibs -Ilibs/imgui -Ilibs/imgui/backends
+CFLAGS    := -O3 -Wall -Wextra -Ilibs -I.           # finds "../xnn.h" and "xnn.h"
+LDFLAGS   := -lglfw -lGL -ldl -lX11 -lm
+
+# Prefer pkg-config for SDL2, fall back to plain -lSDL2
+SDLFLAGS  := $(shell pkg-config --cflags --libs sdl2 2>/dev/null || echo -lSDL2)
+
+BUILD     := build
+TARGET    := $(BUILD)/xnn
+DEMO_DIR  := $(BUILD)/demos
+
+#ImGui sources
+IMGUI_SRC := libs/imgui/imgui.cpp \
+             libs/imgui/imgui_draw.cpp \
+             libs/imgui/imgui_tables.cpp \
+             libs/imgui/imgui_widgets.cpp \
+             libs/imgui/imgui_demo.cpp \
+             libs/imgui/backends/imgui_impl_glfw.cpp \
+             libs/imgui/backends/imgui_impl_opengl3.cpp
+
+#Main C++ app
+$(TARGET): src/main.cpp libs/glad/glad.c $(IMGUI_SRC) | $(BUILD)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+#Automatic demos (in build/demos/)
+DEMO_SRCS    := $(wildcard demos/*.c)
+DEMO_TARGETS := $(patsubst demos/%.c, $(DEMO_DIR)/%, $(DEMO_SRCS))
+
+demos: $(DEMO_TARGETS)
+
+# Build rule: one command, auto-detects SDL2
+$(DEMO_DIR)/%: demos/%.c | $(DEMO_DIR)
+	@echo "Building demo: $@"
+	@if grep -qE "#[[:space:]]*include[[:space:]]*[<'\"](SDL2?/|SDL\.h)" $<; then \
+		$(CC) $(CFLAGS) $< -o $@ $(SDLFLAGS) -lm; \
+	else \
+		$(CC) $(CFLAGS) $< -o $@ -lm; \
+	fi
+
+#Utility targets
+run: $(TARGET)
+	./$(TARGET)
+
 clean:
-	rm -rf $(BUILD_DIR)
-# Run specific demo
-run-%: $(BUILD_DIR)/%
-	@echo "=== Running $* ==="
-	@$<
-.PHONY: all clean
+	rm -rf $(BUILD) 
+
+$(BUILD) $(DEMO_DIR):
+	mkdir -p $@
+
+#Phony targets
+.PHONY: all demos run clean
+all: $(TARGET) demos

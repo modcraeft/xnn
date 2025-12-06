@@ -1,6 +1,8 @@
 # xnn.h – Header-Only Neural Network in C
 
-**No dependencies. Trains MNIST to 98.13%.**
+**Building xnn.c - Main Application**
+
+![xnn.h in action – MNIST training demo](images/fig1.png)
 
 ```c
 size_t arch[] = {784, 128, 10};

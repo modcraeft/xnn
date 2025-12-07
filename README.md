@@ -11,6 +11,16 @@ Network *net = network_alloc(arch, 3, act, LOSS_CE);
 XNN_INIT();
 ```
 
+## XNN
+```
+
+Dependencies:
+cd ./libs
+    git clone --branch docking https://github.com/ocornut/imgui.git
+    git clone https://github.com/nothings/stb.git
+
+```
+
 ## Features
 ```
 Feature                 Status

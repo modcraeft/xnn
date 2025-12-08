@@ -2,6 +2,9 @@
 
 **Building xnn.c - Main Application**
 
+![fig.3](images/fig3.png)
+````
+````
 ![fig.2](images/fig2.png)
 ```
 ```

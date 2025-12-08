@@ -32,7 +32,6 @@ void imgui_plugin_update()
     ImGui::SliderFloat("Magic Value", &value, 0.0f, 100.0f);
     ImGui::ColorEdit3("Color", vec);
 
-    // ← FIXED: proper function pointer + include <cmath>
     ImGui::PlotLines("Live Sine", sine_getter, nullptr, 100, 0, nullptr,
                      -1.0f, 1.0f, ImVec2(300, 80));
 

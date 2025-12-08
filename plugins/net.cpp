@@ -66,7 +66,7 @@ void imgui_plugin_update()
 
     ImGui::SliderFloat("Conn Alpha", &nn.connection_alpha, 0.1f, 1.0f, "%.2f");
 
-    // === Loss Function Selector ===
+    // Loss Function Selector
     ImGui::Separator();
     ImGui::Text("Loss Function:");
     ImGui::SameLine();
@@ -80,7 +80,7 @@ void imgui_plugin_update()
         nn.activations.back() = "Linear";   // allow linear output for regression
     }
 
-    // === Per-Layer Controls ===
+    // Per-Layer Controls
     ImGui::Separator();
     for (size_t i = 0; i < nn.layer_sizes.size(); ++i) {
         ImGui::PushID(i);

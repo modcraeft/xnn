@@ -1,18 +1,18 @@
-CXX       := g++
-CC        := gcc
+CXX      := g++
+CC       := gcc
 
-CXXFLAGS  := -O3 -Wall -Wextra -fpermissive -Ilibs -Ilibs/imgui -Ilibs/imgui/backends
-CFLAGS    := -O3 -Wall -Wextra -Ilibs -I.           # finds "../xnn.h" and "xnn.h"
-LDFLAGS   := -lglfw -lGL -ldl -lX11 -lm
+# Main app flags
+CXXFLAGS := -O3 -Wall -Wextra -fpermissive -Ilibs -Ilibs/imgui -Ilibs/imgui/backends -I.
+CFLAGS   := -O3 -Wall -Wextra -Ilibs -I.
 
-# Prefer pkg-config for SDL2, fall back to plain -lSDL2
-SDLFLAGS  := $(shell pkg-config --cflags --libs sdl2 2>/dev/null || echo -lSDL2)
+LDFLAGS  := -lglfw -lGL -ldl -lX11 -lm
+SDLFLAGS := $(shell pkg-config --cflags --libs sdl2 2>/dev/null || echo -lSDL2)
 
-BUILD     := build
-TARGET    := $(BUILD)/xnn
-DEMO_DIR  := $(BUILD)/demos
+BUILD    := build
+TARGET   := $(BUILD)/xnn
+DEMO_DIR := $(BUILD)/demos
 
-#ImGui sources
+# ImGui sources (used by both main app and plugins)
 IMGUI_SRC := libs/imgui/imgui.cpp \
              libs/imgui/imgui_draw.cpp \
              libs/imgui/imgui_tables.cpp \
@@ -21,17 +21,26 @@ IMGUI_SRC := libs/imgui/imgui.cpp \
              libs/imgui/backends/imgui_impl_glfw.cpp \
              libs/imgui/backends/imgui_impl_opengl3.cpp
 
-#Main C++ app
-$(TARGET): src/main.cpp libs/glad/glad.c $(IMGUI_SRC) | $(BUILD)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+# Main application
+$(TARGET): src/main.cpp libs/glad/glad.c $(IMGUI_SRC) plugin.h | $(BUILD)
+	$(CXX) $(CXXFLAGS) src/main.cpp libs/glad/glad.c $(IMGUI_SRC) -o $@ $(LDFLAGS)
 
-#Automatic demos (in build/demos/)
+# Hot-reloadable plugins (*.so)
+PLUGIN_SRCS   := $(wildcard plugins/*.cpp)
+PLUGIN_TARGETS:= $(patsubst plugins/%.cpp, plugins/%.so, $(PLUGIN_SRCS))
+
+# Rule to build each plugin — links full ImGui inside
+plugins/%.so: plugins/%.cpp plugin.h $(IMGUI_SRC)
+	@echo "Building plugin: $@"
+	$(CXX) -shared -fPIC $(CXXFLAGS) $< $(IMGUI_SRC) -o $@
+
+plugins: $(PLUGIN_TARGETS)
+
+
+# C demos
 DEMO_SRCS    := $(wildcard demos/*.c)
 DEMO_TARGETS := $(patsubst demos/%.c, $(DEMO_DIR)/%, $(DEMO_SRCS))
 
-demos: $(DEMO_TARGETS)
-
-# Build rule: one command, auto-detects SDL2
 $(DEMO_DIR)/%: demos/%.c | $(DEMO_DIR)
 	@echo "Building demo: $@"
 	@if grep -qE "#[[:space:]]*include[[:space:]]*[<'\"](SDL2?/|SDL\.h)" $<; then \
@@ -40,16 +49,23 @@ $(DEMO_DIR)/%: demos/%.c | $(DEMO_DIR)
 		$(CC) $(CFLAGS) $< -o $@ -lm; \
 	fi
 
-#Utility targets
+demos: $(DEMO_TARGETS)
+
+
+# Utility targets
+all: $(TARGET) plugins demos
+
 run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	rm -rf $(BUILD) 
+	rm -rf $(BUILD) plugins/*.so
 
 $(BUILD) $(DEMO_DIR):
 	mkdir -p $@
 
-#Phony targets
-.PHONY: all demos run clean
-all: $(TARGET) demos
+# Helpful aliases
+reload:
+	@echo "Reload"
+
+.PHONY: all run clean demos plugins reload

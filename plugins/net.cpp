@@ -134,7 +134,7 @@ void imgui_plugin_update()
     ImDrawList* draw = ImGui::GetWindowDrawList();
     draw->AddRectFilled(canvas_pos,
                         ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y),
-                        IM_COL32(20, 22, 28, 255));
+                        IM_COL32(0, 0, 0, 255));
     draw->AddRect(canvas_pos,
                   ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y),
                   IM_COL32(80, 80, 100, 255));

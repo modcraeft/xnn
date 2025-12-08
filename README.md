@@ -2,7 +2,10 @@
 
 **Building xnn.c - Main Application**
 
-![xnn.h in action – MNIST training demo](images/fig1.png)
+![fig.2](images/fig2.png)
+```
+```
+![fig.1](images/fig1.png)
 
 ```c
 size_t arch[] = {784, 128, 10};

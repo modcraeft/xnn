@@ -22,7 +22,7 @@ XNN_INIT();
 
 Dependencies:
 cd ./libs
-    git clone --branch docking https://github.com/ocornut/imgui.git
+    git clone https://github.com/ocornut/imgui.git
     git clone https://github.com/nothings/stb.git
 
 ```

@@ -1,0 +1,16 @@
+## TODO
+```
+TODO: Add Ctrl-Middle wheel zoom in/out.
+```
+```
+TODO: Build Train Pipline plugin.
+```
+```
+TODO: Implement intial, trainable AI - Logic Gates [Using Train Pipeline and xnn.h neural network model]
+    THOUGHT: Handover all memory allocation to the Train Pipeline thing and only allocate once all elements are in place.
+    THOUGHT: Therefore, need to re-define Train Pipeline to - ??? Some kind of overall controller.
+    
+```
+```
+TODO: Create subfolders in plugins to represent plugin type. eg. Networks, Games, Maths etc. Create catagory as part of main plugin definition.
+```

@@ -2,7 +2,7 @@
 
 **Building xnn.c - Main Application**
 
-## XNN - [X]Neural Network
+## XNN - [X] Neural Network
 
 ![fig.3](images/fig3.png)
 ````

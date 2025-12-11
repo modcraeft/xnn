@@ -12,7 +12,7 @@
 #define LEARNING_RATE       0.3f
 #define BATCH_SIZE          8
 #define BATCHES_PER_FRAME   400
-#define ARCH                2, 16, 32, 16, 1          // input (x,y) → output brightness
+#define ARCH                2, 16, 32, 16, 1          // input (x,y) - output brightness
 //#define WINDOW_W            1766
 //#define WINDOW_H            1405
 #define WINDOW_W            1200
@@ -31,8 +31,10 @@
 static const size_t arch[] = { ARCH };
 static const int    acts[] = { ACT_RELU, ACT_RELU, ACT_RELU, ACT_SIGMOID };
 
-// ====================== GLOBALS ======================
-typedef struct { uint8_t *data; int w, h, c; } Image;
+typedef struct { 
+    uint8_t *data; 
+    int w, h, c; 
+} Image;
 Image img = {0};
 
 float  g_cost = 1e9f;
@@ -41,10 +43,8 @@ bool   g_paused = false;
 bool   g_fullscreen = false;
 float  g_upscale = 1.0f;
 
-// ====================== GLYPH FONT (your existing one) ======================
 #include "glyphs.h"
 
-// ====================== HELPER DRAWING ======================
 static void fill_circle(SDL_Renderer *r, int cx, int cy, int rad, Uint8 rr, Uint8 gg, Uint8 bb, Uint8 aa)
 {
     SDL_SetRenderDrawColor(r, rr, gg, bb, aa);
@@ -74,7 +74,6 @@ static void render_label(SDL_Renderer *r, int x, int y, float value, int digits,
     }
 }
 
-// ====================== RENDERING ======================
 static void render_network(SDL_Renderer *r, Network *net)
 {
     SDL_SetRenderDrawColor(r, 0x33, 0x33, 0x33, 255);
@@ -181,7 +180,6 @@ static void render_prediction(SDL_Renderer *r, int x, int y, int sz, Network *ne
         }
 }
 
-// ====================== MAIN ======================
 int main(int argc, char **argv)
 {
     if (argc < 2) {

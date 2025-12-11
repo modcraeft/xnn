@@ -26,7 +26,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-    // ONLY load system.so — it manages everything
+    // ONLY load system.so which manages plugins and the ImGui api
     void* system_handle = dlopen("plugins/system.so", RTLD_LAZY | RTLD_GLOBAL);
     if (!system_handle) {
         printf("Failed to load system.so: %s\n", dlerror());

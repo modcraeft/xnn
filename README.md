@@ -27,6 +27,11 @@ cd ./libs
     git clone https://github.com/ocornut/imgui.git
     git clone https://github.com/nothings/stb.git
 
+
+SYSTEM WIDE INSTALLATION!! - SDL2, GLWF
+    ARCH -- sudo pacman -Syu glfw sdl2
+    UBUNTU -- sudo apt update && sudo apt install libglfw3-dev libsdl2-dev
+    FEDORA -- sudo dnf install glfw-devel SDL2-devel
 ```
 
 ## Features

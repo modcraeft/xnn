@@ -1,11 +1,14 @@
 ## TODO
 ```
-TODO: Add Ctrl-Middle wheel zoom in/out.
+TODO: Fix crashing on pulgin unload by implementing data selection UI in net.cpp and tracking an allocated flag
 ```
 ```
 TODO: Implement Snake Game plugin
 
 ```
 ```
-TODO: Create subfolders in plugins to represent plugin type. eg. Networks, Games, Maths etc. Create catagory as part of main plugin definition.
+TODO: Implement xnn_image to load and train image data
+```
+```
+TODO: Add Ctrl-Middle wheel zoom in/out.
 ```

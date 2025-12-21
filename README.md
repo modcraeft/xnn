@@ -29,7 +29,7 @@ Dependencies:
 cd ./libs
     git clone https://github.com/ocornut/imgui.git
     git clone https://github.com/nothings/stb.git
-
+    git clone https://github.com/epezent/implot.git
 
 SYSTEM WIDE INSTALLATION!! - SDL2, GLWF
     ARCH -- sudo pacman -Syu glfw sdl2

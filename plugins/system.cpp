@@ -1,4 +1,4 @@
-// plugins/system.cpp
+// plugins/system.cpp (added data passing mechanism)
 #define SYSTEM_DEBUG
 
 #include "../plugin.h"
@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <dlfcn.h>
+#include <map>
 
 namespace fs = std::filesystem;
 
@@ -32,6 +33,24 @@ struct PluginInfo {
 
 static std::vector<PluginInfo> available_plugins;
 static ImGuiContext* g_ctx = nullptr;
+
+// Data passing mechanism
+static std::map<std::string, Data* (*)()> data_providers;
+
+extern "C" void register_data_provider(const char* name, Data* (*func)()) {
+    data_providers[name] = func;
+    SYS_LOG("[System] Registered data provider: %s\n", name);
+}
+
+extern "C" Data* get_training_data(const char* name) {
+    auto it = data_providers.find(name);
+    if (it != data_providers.end()) {
+        SYS_LOG("[System] Providing data for: %s\n", name);
+        return it->second();
+    }
+    SYS_LOG("[System] No provider for: %s\n", name);
+    return nullptr;
+}
 
 static void ApplyProDarkTheme()
 {
@@ -241,4 +260,5 @@ void imgui_plugin_shutdown()
 {
     while (!available_plugins.empty() && available_plugins.back().loaded)
         UnloadPlugin(available_plugins.size() - 1);
+    data_providers.clear();
 }

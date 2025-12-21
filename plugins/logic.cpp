@@ -1,5 +1,4 @@
-// plugins/logic.cpp
-
+// plugins/logic.cpp (added data provider)
 #include "../plugin.h"
 #include <cstdio>
 
@@ -42,10 +41,41 @@ static bool get_output(bool a, bool b, GateType gate)
     }
 }
 
+// Data provider function
+static Data* provide_gate_data() {
+    static Data data = {nullptr, nullptr};
+    static int last_gate = -1;
+
+    if (last_gate != current_gate) {
+        last_gate = current_gate;
+
+        if (data.in) matrix_free(data.in);
+        if (data.out) matrix_free(data.out);
+
+        GateType gt = (GateType)current_gate;
+        bool two_in = gate_infos[gt].is_two_input;
+        size_t samples = two_in ? 4 : 2;
+        data.in = matrix_alloc(samples, two_in ? 2 : 1);
+        data.out = matrix_alloc(samples, 1);
+
+        size_t idx = 0;
+        for (int a = 0; a < 2; ++a) {
+            for (int b = 0; b < (two_in ? 2 : 1); ++b) {
+                data.in->data[idx * data.in->cols] = (float)a;
+                if (two_in) data.in->data[idx * data.in->cols + 1] = (float)b;
+                data.out->data[idx] = (float)get_output((bool)a, (bool)b, gt);
+                idx++;
+            }
+        }
+    }
+    return &data;
+}
+
 void imgui_plugin_init(ImGuiContext* ctx)
 {
     ImGui::SetCurrentContext(ctx);
     printf("[Logic] Initialized – Logic Gate Data\n");
+    register_data_provider("gate_training_data", provide_gate_data);
 }
 
 void imgui_plugin_update()
@@ -210,4 +240,7 @@ void imgui_plugin_update()
 void imgui_plugin_shutdown()
 {
     printf("[Logic] Shutdown – Logic Gate Data\n");
+    // Clean up static data
+    if (provide_gate_data()->in) matrix_free(provide_gate_data()->in);
+    if (provide_gate_data()->out) matrix_free(provide_gate_data()->out);
 }

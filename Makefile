@@ -1,7 +1,7 @@
 CXX      := g++
 CC       := gcc
 
-CXXFLAGS := -O3 -Wall -Wextra -fpermissive -Ilibs -Ilibs/imgui -Ilibs/imgui/backends -I.
+CXXFLAGS := -O3 -Wall -Wextra -fpermissive -Ilibs -Ilibs/imgui -Ilibs/implot -Ilibs/imgui/backends -I.
 CFLAGS   := -O3 -Wall -Wextra -Ilibs -I.
 LDFLAGS  := -lglfw -lGL -ldl -lX11 -lm
 SDLFLAGS := $(shell pkg-config --cflags --libs sdl2 2>/dev/null || echo -lSDL2)
@@ -17,7 +17,9 @@ IMGUI_SRC := libs/imgui/imgui.cpp \
              libs/imgui/imgui_widgets.cpp \
              libs/imgui/imgui_demo.cpp \
              libs/imgui/backends/imgui_impl_glfw.cpp \
-             libs/imgui/backends/imgui_impl_opengl3.cpp
+             libs/imgui/backends/imgui_impl_opengl3.cpp \
+             libs/implot/implot.cpp \
+             libs/implot/implot_items.cpp
 
 $(BUILD):
 	@mkdir -p $@

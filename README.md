@@ -4,6 +4,9 @@
 
 ## XNN - [X] Neural Network
 
+![fig.4](images/fig4.png)
+````
+````
 ![fig.3](images/fig3.png)
 ````
 ````

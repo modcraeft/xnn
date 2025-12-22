@@ -37,7 +37,7 @@ static struct {
 
     // Verification and continuous training
     std::vector<float> loss_history;  // History for graphing
-    int max_history = 100;  // Configurable max points
+    int max_history = 10000;  // Configurable max points
     float threshold = 0.5f;  // Configurable threshold for true/false
     bool is_training = false;
 
@@ -424,11 +424,11 @@ void imgui_plugin_update()
     ImGui::Separator();
     ImGui::Text("Loss History Graph");
     ImGui::SliderFloat("True/False Threshold", &nn.threshold, 0.0f, 1.0f, "%.2f");
-    ImGui::DragInt("Max History Points", &nn.max_history, 1, 10, 1000);  // New slider for changing range
+    ImGui::DragInt("Max History Points", &nn.max_history, 1, 10, 10000);  // New slider for changing range
     if (ImGui::Button("Clear Loss History")) nn.loss_history.clear();
 
     // Loss Graph (using ImPlot; fallback to ImGui::PlotLines if ImPlot not available)
-    if (ImPlot::BeginPlot("Loss Over Time", ImVec2(-1, 200))) {  // Increased height to 200
+    if (ImPlot::BeginPlot("Loss Over Time", ImVec2(-1, 600))) {
         ImPlot::SetupAxes("Epoch/Step", "MSE Loss", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
         ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0f, 1.0f, ImPlotCond_Always);  // Fixed y-axis 0 to 1
         ImPlot::SetupAxisLimits(ImAxis_X1, 0.0f, (double)nn.loss_history.size(), ImPlotCond_Always);  // x-axis from 0 to current history size

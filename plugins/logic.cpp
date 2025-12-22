@@ -75,7 +75,7 @@ void imgui_plugin_init(ImGuiContext* ctx)
 {
     ImGui::SetCurrentContext(ctx);
     printf("[Logic] Initialized – Logic Gate Data\n");
-    register_data_provider("gate_training_data", provide_gate_data);
+    register_data_provider("gate_training_data", provide_gate_data, "logic");  // Updated with plugin name "logic"
 }
 
 void imgui_plugin_update()
@@ -177,22 +177,20 @@ void imgui_plugin_update()
         draw->AddConvexPolyFilled(pts, 4, col_gate);
 
         if (current_gate == GATE_OR || current_gate == GATE_NOR) {
-            ImVec2 pts[4] = {
+            draw->AddBezierCubic(
                 ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.15f),
-                ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.85f),
-                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.75f),
-                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.25f)
-            };
-            draw->AddConvexPolyFilled(pts, 4, col_gate);
+                ImVec2(p0.x + canvas_size.x*0.50f, p0.y + canvas_size.y*0.05f),
+                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.50f),
+                ImVec2(p0.x + canvas_size.x*0.50f, p0.y + canvas_size.y*0.95f),
+                col_curve, 6.0f);
         }
         if (current_gate == GATE_XOR || current_gate == GATE_XNOR) {
-            ImVec2 pts[4] = {
-                ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.15f),
-                ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.85f),
-                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.75f),
-                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.25f)
-            };
-            draw->AddConvexPolyFilled(pts, 4, col_gate);
+            draw->AddBezierCubic(
+                ImVec2(p0.x + canvas_size.x*0.30f, p0.y + canvas_size.y*0.15f),
+                ImVec2(p0.x + canvas_size.x*0.45f, p0.y + canvas_size.y*0.05f),
+                ImVec2(p0.x + canvas_size.x*0.65f, p0.y + canvas_size.y*0.50f),
+                ImVec2(p0.x + canvas_size.x*0.45f, p0.y + canvas_size.y*0.95f),
+                col_curve, 5.0f);
         }
         if (current_gate == GATE_NAND || current_gate == GATE_NOR || current_gate == GATE_XNOR) {
             draw->AddCircleFilled(ImVec2(p0.x + canvas_size.x*0.73f, p0.y + canvas_size.y*0.5f), 12, col_gate);

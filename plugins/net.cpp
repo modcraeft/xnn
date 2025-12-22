@@ -1,4 +1,4 @@
-// plugins/net.cpp (updated with fixed y-axis and configurable history range)
+// plugins/net.cpp (updated with data source selection UI)
 #define XNN_IMPLEMENTATION  // Ensure xnn implementation is included
 #include "../plugin.h"
 #include <vector>
@@ -10,10 +10,11 @@
 #include <implot.h>  // Ensure linked in Makefile
 
 extern "C" Data* get_training_data(const char* name);
+extern "C" void get_provider_names(const char*** out_names, int* count);  // Updated signature
 
 static struct {
     bool show = true;
-    bool show_verify = true;  // Restored to true by default
+    bool show_verify = true;
     std::vector<size_t> layer_sizes = {2, 4, 1};  // Default for logic gates (e.g., XOR: 2 in, 1 out)
     std::vector<std::string> activations = {
         "",         // Input: no activation
@@ -36,9 +37,13 @@ static struct {
 
     // Verification and continuous training
     std::vector<float> loss_history;  // History for graphing
-    int max_history = 100;  // Configurable max points (changed from const to int for UI slider)
+    int max_history = 100;  // Configurable max points
     float threshold = 0.5f;  // Configurable threshold for true/false
-    bool is_training = false;  // New: Continuous training state
+    bool is_training = false;
+
+    // New: Data source selection
+    char data_source[64] = "gate_training_data";  // Default source
+    std::vector<const char*> available_providers;  // For combo box
 } nn;
 
 static int get_act_id(const std::string& s) {
@@ -190,12 +195,32 @@ void imgui_plugin_update()
 
     ImGui::Separator();
     ImGui::Text("Training");
+
+    // New: Data source selection
+    ImGui::Text("Data Source:");
+    ImGui::SameLine();
+    const char** names;
+    int provider_count;
+    get_provider_names(&names, &provider_count);  // Updated call
+    static int selected_provider = 0;
+    if (ImGui::BeginCombo("Provider", nn.data_source)) {
+        for (int j = 0; j < provider_count; ++j) {
+            bool is_selected = (selected_provider == j);
+            if (ImGui::Selectable(names[j], is_selected)) {
+                selected_provider = j;
+                strncpy(nn.data_source, names[j], sizeof(nn.data_source) - 1);  // Fine as-is; warning was likely flag-related
+            }
+            if (is_selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
     ImGui::DragFloat("Learning Rate", &nn.learning_rate, 0.001f, 0.0001f, 1.0f);
     ImGui::DragInt("Epochs per Frame/Click", &nn.train_epochs, 1, 1, 100);  // Renamed for clarity
 
-    Data* training_data = get_training_data("gate_training_data");
+    Data* training_data = get_training_data(nn.data_source);
     if (!training_data) {
-        ImGui::TextColored(ImVec4(1,0,0,1), "Training data unavailable. Load Logic plugin.");
+        ImGui::TextColored(ImVec4(1,0,0,1), "Training data unavailable. Check selected provider.");
         nn.is_training = false;  // Auto-pause if data missing
     } else if (!nn.network) {
         ImGui::TextColored(ImVec4(1,0.5f,0,1), "Create network first.");
@@ -205,8 +230,8 @@ void imgui_plugin_update()
         ImGui::TextColored(ImVec4(1,0,0,1), "Size mismatch! Adjust network input/output.");
         nn.is_training = false;
     } else {
-        ImGui::Text("Training data from Logic: %zu samples (%zu in, %zu out)",
-                    training_data->in->rows, training_data->in->cols, training_data->out->cols);
+        ImGui::Text("Training data from %s: %zu samples (%zu in, %zu out)",
+                    nn.data_source, training_data->in->rows, training_data->in->cols, training_data->out->cols);
 
         // Manual Train Button
         if (ImGui::Button("Train Once")) {
@@ -334,9 +359,9 @@ void imgui_plugin_update()
         return;
     }
 
-    training_data = get_training_data("gate_training_data");  // Re-fetch in case unloaded/reloaded
+    training_data = get_training_data(nn.data_source);  // Use selected source
     if (!training_data) {
-        ImGui::TextColored(ImVec4(1,0,0,1), "Training data unavailable. Load Logic plugin.");
+        ImGui::TextColored(ImVec4(1,0,0,1), "Training data unavailable. Check selected provider.");
         ImGui::End();
         return;
     }
@@ -399,11 +424,11 @@ void imgui_plugin_update()
     ImGui::Separator();
     ImGui::Text("Loss History Graph");
     ImGui::SliderFloat("True/False Threshold", &nn.threshold, 0.0f, 1.0f, "%.2f");
-    ImGui::DragInt("Max History Points", &nn.max_history, 1, 10, 10000);  // New slider for changing range
+    ImGui::DragInt("Max History Points", &nn.max_history, 1, 10, 1000);  // New slider for changing range
     if (ImGui::Button("Clear Loss History")) nn.loss_history.clear();
 
     // Loss Graph (using ImPlot; fallback to ImGui::PlotLines if ImPlot not available)
-    if (ImPlot::BeginPlot("Loss Over Time", ImVec2(-1, 650))) {
+    if (ImPlot::BeginPlot("Loss Over Time", ImVec2(-1, 200))) {  // Increased height to 200
         ImPlot::SetupAxes("Epoch/Step", "MSE Loss", ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
         ImPlot::SetupAxisLimits(ImAxis_Y1, 0.0f, 1.0f, ImPlotCond_Always);  // Fixed y-axis 0 to 1
         ImPlot::SetupAxisLimits(ImAxis_X1, 0.0f, (double)nn.loss_history.size(), ImPlotCond_Always);  // x-axis from 0 to current history size

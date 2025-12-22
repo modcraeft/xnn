@@ -1,4 +1,4 @@
-// plugins/system.cpp (added data passing mechanism)
+// plugins/system.cpp
 #define SYSTEM_DEBUG
 
 #include "../plugin.h"
@@ -36,10 +36,12 @@ static ImGuiContext* g_ctx = nullptr;
 
 // Data passing mechanism
 static std::map<std::string, Data* (*)()> data_providers;
+static std::map<std::string, std::string> provider_to_plugin;  // Track which plugin owns each provider
 
-extern "C" void register_data_provider(const char* name, Data* (*func)()) {
+extern "C" void register_data_provider(const char* name, Data* (*func)(), const char* plugin_name) {
     data_providers[name] = func;
-    SYS_LOG("[System] Registered data provider: %s\n", name);
+    provider_to_plugin[name] = plugin_name;  // Associate with plugin
+    SYS_LOG("[System] Registered data provider: %s from %s\n", name, plugin_name);
 }
 
 extern "C" Data* get_training_data(const char* name) {
@@ -50,6 +52,17 @@ extern "C" Data* get_training_data(const char* name) {
     }
     SYS_LOG("[System] No provider for: %s\n", name);
     return nullptr;
+}
+
+// New: Exported function to get provider names (updated to avoid type mismatch)
+extern "C" void get_provider_names(const char*** out_names, int* count) {
+    static std::vector<const char*> provider_list;
+    provider_list.clear();
+    for (const auto& pair : data_providers) {
+        provider_list.push_back(pair.first.c_str());
+    }
+    *out_names = provider_list.empty() ? nullptr : provider_list.data();
+    *count = provider_list.size();
 }
 
 static void ApplyProDarkTheme()
@@ -123,8 +136,22 @@ static void UnloadPlugin(size_t i)
 {
     if (i >= available_plugins.size()) return;
     auto& p = available_plugins[i];
+    std::string plugin_name = fs::path(p.path).stem().string();  // e.g., "logic" from "logic.so"
+
     if (p.shutdown) p.shutdown();
     if (p.handle) dlclose(p.handle);
+
+    // Remove associated providers
+    for (auto it = provider_to_plugin.begin(); it != provider_to_plugin.end(); ) {
+        if (it->second == plugin_name) {
+            data_providers.erase(it->first);
+            SYS_LOG("[System] Removed provider on unload: %s\n", it->first.c_str());
+            it = provider_to_plugin.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
     available_plugins.erase(available_plugins.begin() + i);
 }
 
@@ -246,6 +273,14 @@ void imgui_plugin_update()
         }
     }
 
+    // New: Display registered providers in UI for visibility
+    if (ImGui::CollapsingHeader("Registered Data Providers")) {
+        for (const auto& pair : data_providers) {
+            ImGui::Text("%s (from %s)", pair.first.c_str(), provider_to_plugin[pair.first].c_str());
+        }
+        if (data_providers.empty()) ImGui::Text("None registered.");
+    }
+
     ImGui::End();
 
     // CALL ALL LOADED PLUGINS
@@ -261,4 +296,5 @@ void imgui_plugin_shutdown()
     while (!available_plugins.empty() && available_plugins.back().loaded)
         UnloadPlugin(available_plugins.size() - 1);
     data_providers.clear();
+    provider_to_plugin.clear();
 }

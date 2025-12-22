@@ -177,20 +177,23 @@ void imgui_plugin_update()
         draw->AddConvexPolyFilled(pts, 4, col_gate);
 
         if (current_gate == GATE_OR || current_gate == GATE_NOR) {
-            draw->AddBezierCubic(
+
+            ImVec2 pts[4] = {
                 ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.15f),
-                ImVec2(p0.x + canvas_size.x*0.50f, p0.y + canvas_size.y*0.05f),
-                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.50f),
-                ImVec2(p0.x + canvas_size.x*0.50f, p0.y + canvas_size.y*0.95f),
-                col_curve, 6.0f);
-        }
+                ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.85f),
+                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.75f),
+                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.25f)
+            };
+            draw->AddConvexPolyFilled(pts, 4, col_gate);
+        }    
         if (current_gate == GATE_XOR || current_gate == GATE_XNOR) {
-            draw->AddBezierCubic(
-                ImVec2(p0.x + canvas_size.x*0.30f, p0.y + canvas_size.y*0.15f),
-                ImVec2(p0.x + canvas_size.x*0.45f, p0.y + canvas_size.y*0.05f),
-                ImVec2(p0.x + canvas_size.x*0.65f, p0.y + canvas_size.y*0.50f),
-                ImVec2(p0.x + canvas_size.x*0.45f, p0.y + canvas_size.y*0.95f),
-                col_curve, 5.0f);
+            ImVec2 pts[4] = {
+                ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.15f),
+                ImVec2(p0.x + canvas_size.x*0.35f, p0.y + canvas_size.y*0.85f),
+                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.75f),
+                ImVec2(p0.x + canvas_size.x*0.70f, p0.y + canvas_size.y*0.25f)
+            };
+            draw->AddConvexPolyFilled(pts, 4, col_gate);
         }
         if (current_gate == GATE_NAND || current_gate == GATE_NOR || current_gate == GATE_XNOR) {
             draw->AddCircleFilled(ImVec2(p0.x + canvas_size.x*0.73f, p0.y + canvas_size.y*0.5f), 12, col_gate);

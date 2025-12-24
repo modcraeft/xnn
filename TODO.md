@@ -18,4 +18,5 @@ TODO: Add Ctrl-Middle wheel zoom in/out.
 
 ```
 TODO: Fix crashing on pulgin unload by implementing data selection UI in net.cpp and tracking an allocated flag -- DONE
+UPDATE: Yet to implement UI update. Considering Orchestration paradigm.
 ```

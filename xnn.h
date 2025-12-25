@@ -1,18 +1,4 @@
-/* ==============================================================
- * xnn.h – header-only neural network in C
- * --------------------------------------------------------------
- * • Switchable activations: sigmoid, tanh, relu, softmax (per layer)
- * • Xavier/He initialization
- * • Loss: MSE or Cross-Entropy (with softmax)
- * • XOR, MNIST, regression ready
- * • Save/load, CSV helpers, gradient checking
- * --------------------------------------------------------------
- * Usage:
- *   size_t arch[] = {784, 128, 10};
- *   int act[] = {ACT_RELU, ACT_RELU, ACT_SOFTMAX};
- *   Network *net = network_alloc(arch, 3, act, LOSS_CE);
- *   XNN_INIT();
- * ============================================================== */
+// xnn.h (added ACT_LINEAR support)
 #ifndef XNN_H_
 #define XNN_H_
 #include <stdio.h>
@@ -33,7 +19,8 @@ typedef enum {
     ACT_SIGMOID = 0,
     ACT_TANH    = 1,
     ACT_RELU    = 2,
-    ACT_SOFTMAX = 3
+    ACT_SOFTMAX = 3,
+    ACT_LINEAR  = 4  // Added for identity (no activation)
 } Activation;
 
 typedef enum {
@@ -177,6 +164,8 @@ static void act_softmax(Matrix *m)
     }
     for (size_t i = 0; i < m->rows; ++i) m->data[i] /= sum;
 }
+static void act_linear(Matrix *m) { /* identity */ }
+static float dact_linear(float x) { return 1.0f; }
 
 /* ---------- Network ---------- */
 Network *network_alloc(const size_t *arch, size_t n, const int *act, int loss)
@@ -222,9 +211,13 @@ void network_rand(Network *net)
     for(size_t i=0;i<net->layers-1;i++){
         Matrix *w = net->w[i];
         size_t fan_in = w->cols, fan_out = w->rows;
-        float limit = (net->activations[i+1] == ACT_RELU)
-            ? sqrtf(2.0f / fan_in)
-            : sqrtf(6.0f / (fan_in + fan_out));
+        float limit;
+        int act_type = net->activations[i+1];
+        if (act_type == ACT_RELU || act_type == ACT_LINEAR) {
+            limit = sqrtf(2.0f / fan_in);
+        } else {
+            limit = sqrtf(6.0f / (fan_in + fan_out));
+        }
         for(size_t j=0;j<w->rows*w->cols;j++)
             w->data[j] = rand_float(-limit, limit);
         if(net->b[i]) matrix_rand_bias(net->b[i]);
@@ -244,10 +237,13 @@ void network_print(const Network *net)
     printf("Network: %zu layers, loss=%s\n", net->layers,
            net->loss == LOSS_MSE ? "MSE" : "Cross-Entropy");
     for (size_t i = 0; i < net->layers - 1; ++i) {
-        printf("Layer %zu -> %zu: %s\n", i, i+1,
-               net->activations[i+1] == ACT_SIGMOID ? "Sigmoid" :
-               net->activations[i+1] == ACT_TANH ? "Tanh" :
-               net->activations[i+1] == ACT_RELU ? "ReLU" : "Softmax");
+        const char* act_str = 
+            net->activations[i+1] == ACT_SIGMOID ? "Sigmoid" :
+            net->activations[i+1] == ACT_TANH ? "Tanh" :
+            net->activations[i+1] == ACT_RELU ? "ReLU" :
+            net->activations[i+1] == ACT_SOFTMAX ? "Softmax" :
+            net->activations[i+1] == ACT_LINEAR ? "Linear" : "Unknown";
+        printf("Layer %zu -> %zu: %s\n", i, i+1, act_str);
         printf(" W: "); matrix_print(net->w[i]);
         printf(" b: "); matrix_print(net->b[i]);
     }
@@ -263,6 +259,7 @@ void forward(Network *net)
         else if(act == ACT_TANH) act_tanh(net->a[i+1]);
         else if(act == ACT_RELU) act_relu(net->a[i+1]);
         else if(act == ACT_SOFTMAX) act_softmax(net->a[i+1]);
+        else if(act == ACT_LINEAR) act_linear(net->a[i+1]);
     }
 }
 void backprop(Network *net, Network *grad, const Data *data)
@@ -303,7 +300,8 @@ void backprop(Network *net, Network *grad, const Data *data)
                 } else {
                     ds = (act == ACT_SIGMOID) ? dact_sigmoid(a) :
                          (act == ACT_TANH)    ? dact_tanh(a)    :
-                         (act == ACT_RELU)    ? dact_relu(a)    : 0;
+                         (act == ACT_RELU)    ? dact_relu(a)    :
+                         (act == ACT_LINEAR)  ? dact_linear(a)  : 0;
                 }
                 grad->b[l-1]->data[j] += da * ds;
                 for(size_t k=0;k<net->a[l-1]->rows;k++){
@@ -387,32 +385,6 @@ Network *network_load(const char *path, const size_t *arch, size_t n, const int 
     fclose(f);
     return net;
 }
-
-/*
-Network *network_load(const char *path, const size_t *arch, size_t n, const int *act, int loss)
-{
-    FILE *f = fopen(path, "rb");
-    if (!f) return NULL;
-    size_t layers; int saved_loss;
-    if (fread(&layers, sizeof(size_t), 1, f) != 1 || layers != n) goto fail;
-    if (fread(&saved_loss, sizeof(int), 1, f) != 1 || saved_loss != loss) goto fail;
-    Network *net = network_alloc(arch, n, act, loss);
-    if (!net) goto fail;
-    for (size_t i = 0; i < n - 1; ++i) {
-        size_t w_sz = net->w[i]->rows * net->w[i]->cols;
-        size_t b_sz = net->b[i]->rows;
-        if (fread(net->w[i]->data, sizeof(float), w_sz, f) != w_sz) goto fail_net;
-        if (fread(net->b[i]->data, sizeof(float), b_sz, f) != b_sz) goto fail_net;
-    }
-    fclose(f);
-    return net;
-fail_net:
-    network_free(net);
-fail:
-    fclose(f);
-    return NULL;
-}
-*/
 
 /* ---------- Utilities ---------- */
 Matrix *matrix_from_csv(const char *path, size_t rows, size_t cols)

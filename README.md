@@ -86,7 +86,7 @@ mnist.c         Train mnist
 mnist_draw.c    Load mnist model and visualize [SDL2]
 char_rnn.c      Trains text (AI Generated)
 image_xnn.c     Trains image data [SDL2 STB_IMAGE] (./images)
-image_fourier.c Trains Image date (AI Generated) [SDL2 STB_IMAGE] (./images)
+image_fourier.c Trains Image data (AI Generated) [SDL2 STB_IMAGE] (./images)
 three.c         Trains three 14x14 ASCII images and interpolates between them [SDL2].
 ```
 ## API
